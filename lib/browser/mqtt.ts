@@ -15,7 +15,7 @@
 import { AsyncClient, IClientOptions, ISubscriptionGrant, IUnsubackPacket, IPublishPacket, IConnackPacket } from "async-mqtt";
 import { MqttClient as _MqttClient } from "mqtt";
 import * as WebsocketUtils from "./ws";
-import * as trie from "./trie";
+import { Trie, TrieOp, Node as TrieNode } from "./trie";
 
 import { BufferedEventEmitter } from "../common/event";
 import { CrtError } from "../browser";
@@ -112,12 +112,12 @@ export class MqttClient {
 type SubscriptionCallback = (topic: string, payload: ArrayBuffer) => void;
 
 /** @internal */
-class TopicTrie extends trie.Trie<SubscriptionCallback | undefined> {
+class TopicTrie extends Trie<SubscriptionCallback | undefined> {
     constructor() {
         super('/');
     }
 
-    protected find_node(key: string, op: trie.TrieOp) {
+    protected find_node(key: string, op: TrieOp) {
         const parts = this.split_key(key);
         let current = this.root;
         let parent = undefined;
@@ -132,8 +132,8 @@ class TopicTrie extends trie.Trie<SubscriptionCallback | undefined> {
                 child = current.children.get('+');
             }
             if (!child) {
-                if (op == trie.TrieOp.Insert) {
-                    current.children.set(part, child = new trie.Node(part));
+                if (op == TrieOp.Insert) {
+                    current.children.set(part, child = new TrieNode(part));
                 }
                 else {
                     return undefined;
@@ -142,7 +142,7 @@ class TopicTrie extends trie.Trie<SubscriptionCallback | undefined> {
             parent = current;
             current = child;
         }
-        if (parent && op == trie.TrieOp.Delete) {
+        if (parent && op == TrieOp.Delete) {
             parent.children.delete(current.key!);
         }
         return current;
