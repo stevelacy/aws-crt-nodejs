@@ -3,13 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-import * as AWS from 'aws-sdk';
-import { ClientBootstrap } from './io';
-import { MqttClient, QoS, MqttWill } from './mqtt';
-import { AwsIotMqttConnectionConfigBuilder } from './aws_iot';
-import { TextDecoder } from 'util';
-import { AwsCredentialsProvider } from './auth';
 import { v4 as uuid } from 'uuid';
+import { SecretsManager, CognitoIdentityCredentials } from 'aws-sdk';
+
+import { ClientBootstrap } from '@awscrt/io';
+import { MqttClient, QoS, MqttWill } from '@awscrt/mqtt';
+import { AwsIotMqttConnectionConfigBuilder } from '@awscrt/aws_iot';
+import { TextDecoder } from '@awscrt/polyfills';
+import { AwsCredentialsProvider } from '@awscrt/auth';
+
 
 jest.setTimeout(10000);
 
@@ -44,7 +46,7 @@ async function fetch_credentials(): Promise<Config> {
     return new Promise((resolve, reject) => {
         try {
             const timeout = setTimeout(reject, 5000);
-            const client = new AWS.SecretsManager({
+            const client = new SecretsManager({
                 region: Config.region,
                 httpOptions: {
                     connectTimeout: 3000,
@@ -106,7 +108,7 @@ async function fetch_credentials(): Promise<Config> {
                     return reject(error);
                 }
 
-                const credentials = new AWS.CognitoIdentityCredentials({
+                const credentials = new CognitoIdentityCredentials({
                     IdentityPoolId: data.SecretString as string,
                 }, {
                     region: "us-east-1",
