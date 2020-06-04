@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -13,13 +13,15 @@
  * permissions and limitations under the License.
  */
 
-import * as AWS from 'aws-sdk';
-import { ClientBootstrap } from './io';
-import { MqttClient, QoS, MqttWill } from './mqtt';
-import { AwsIotMqttConnectionConfigBuilder } from './aws_iot';
-import { TextDecoder } from 'util';
-import { AwsCredentialsProvider } from './auth';
 import { v4 as uuid } from 'uuid';
+import { SecretsManager, CognitoIdentityCredentials } from 'aws-sdk';
+
+import { ClientBootstrap } from '@awscrt/io';
+import { MqttClient, QoS, MqttWill } from '@awscrt/mqtt';
+import { AwsIotMqttConnectionConfigBuilder } from '@awscrt/aws_iot';
+import { TextDecoder } from '@awscrt/polyfills';
+import { AwsCredentialsProvider } from '@awscrt/auth';
+
 
 jest.setTimeout(10000);
 
@@ -54,7 +56,7 @@ async function fetch_credentials(): Promise<Config> {
     return new Promise((resolve, reject) => {
         try {
             const timeout = setTimeout(reject, 5000);
-            const client = new AWS.SecretsManager({
+            const client = new SecretsManager({
                 region: Config.region,
                 httpOptions: {
                     connectTimeout: 3000,
@@ -116,7 +118,7 @@ async function fetch_credentials(): Promise<Config> {
                     return reject(error);
                 }
 
-                const credentials = new AWS.CognitoIdentityCredentials({
+                const credentials = new CognitoIdentityCredentials({
                     IdentityPoolId: data.SecretString as string,
                 }, {
                     region: "us-east-1",
