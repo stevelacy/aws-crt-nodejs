@@ -40,7 +40,6 @@
     "yargs": "^13.3.2"
   },
   "dependencies": {
-    "async-mqtt": "^2.5.0",
     "axios": "^0.19.2",
     "crypto-js": "^3.3.0",
     "mqtt": "^4.1.0",
