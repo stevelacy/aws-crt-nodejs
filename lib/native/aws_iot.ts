@@ -86,6 +86,10 @@ export class AwsIotMqttConnectionConfigBuilder {
         return builder;
     }
 
+    static new_websocket_builder(...args: any[]) {
+        return this.new_with_websockets(...args);
+    }
+
     /**
      * Configures the connection to use MQTT over websockets. Forces the port to 443.
      */
@@ -212,6 +216,17 @@ export class AwsIotMqttConnectionConfigBuilder {
      */
     with_socket_options(socket_options: io.SocketOptions) {
         this.params.socket_options = socket_options;
+        return this;
+    }
+
+    /**
+     * Configures AWS credentials (usually from Cognito) for this connection
+     * @param aws_region The service region to connect to
+     * @param aws_access_id IAM Access ID
+     * @param aws_secret_key IAM Secret Key
+     * @param aws_sts_token STS token from Cognito (optional)
+     */
+    with_credentials(aws_region: string, aws_access_id: string, aws_secret_key: string, aws_sts_token?: string) {
         return this;
     }
 
