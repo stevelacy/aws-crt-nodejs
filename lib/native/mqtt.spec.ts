@@ -21,7 +21,7 @@ import { Config, fetch_credentials } from '@test/credentials';
 
 jest.setTimeout(10000);
 
-test('MQTT Websocket', async () => {
+test('MQTT Native Websocket Connect/Disconnect', async () => {
     let aws_opts: Config;
     try {
         aws_opts = await fetch_credentials();
@@ -44,9 +44,10 @@ test('MQTT Websocket', async () => {
         .build()
     const client = new MqttClient(bootstrap);
     const connection = client.new_connection(config);
-    const promise = new Promise((resolve, reject) => {
-        connection.on('connect', (session_present) => {
-            connection.disconnect();
+    const promise = new Promise(async (resolve, reject) => {
+        connection.on('connect', async (session_present) => {
+            const disconnected = connection.disconnect();
+            await expect(disconnected).resolves.toBeUndefined();
 
             if (session_present) {
                 reject("Session present");
@@ -58,7 +59,8 @@ test('MQTT Websocket', async () => {
         connection.on('disconnect', () => {
             resolve(true);
         })
-        connection.connect();
+        const connected = connection.connect();
+        await expect(connected).resolves.toBeDefined();
     });
     await expect(promise).resolves.toBeTruthy();
 });
