@@ -251,15 +251,8 @@ export class MqttClientConnection extends BufferedEventEmitter {
     on(event: 'message', listener: (topic: string, payload: Buffer) => void): this;
 
     /** @internal */
-    // Overridden to allow uncorking on connect
     on(event: string | symbol, listener: (...args: any[]) => void): this {
-        super.on(event, listener);
-        if (event == 'connect') {
-            process.nextTick(() => {
-                this.uncork();
-            })
-        }
-        return this;
+        return super.on(event, listener);
     }
 
     private on_connect = (connack: mqtt.IConnackPacket) => {
@@ -302,13 +295,16 @@ export class MqttClientConnection extends BufferedEventEmitter {
      *          true for resuming an existing session, or false if the session is new
      */
     async connect() {
+        setTimeout(() => { this.uncork() }, 0);
         return new Promise<boolean>((resolve, reject) => {
+            const on_connect_error = (error: Error) => {
+                reject(new CrtError(error));
+            };
             this.connection.once('connect', (connack: mqtt.IConnackPacket) => {
+                this.connection.removeListener('error', on_connect_error);
                 resolve(connack.sessionPresent);
             });
-            this.connection.once('error', (error: Error) => {
-                reject(new CrtError(error));
-            });
+            this.connection.once('error', on_connect_error);
         });
     }
 
