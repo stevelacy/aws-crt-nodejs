@@ -4,131 +4,14 @@
  */
 
 import { v4 as uuid } from 'uuid';
-import { SecretsManager, CognitoIdentityCredentials } from 'aws-sdk';
 
 import { ClientBootstrap } from '@awscrt/io';
 import { MqttClient, QoS, MqttWill } from '@awscrt/mqtt';
 import { AwsIotMqttConnectionConfigBuilder } from '@awscrt/aws_iot';
 import { TextDecoder } from '@awscrt/polyfills';
-import { AwsCredentialsProvider } from '@awscrt/auth';
-
+import { Config, fetch_credentials } from '@test/credentials';
 
 jest.setTimeout(10000);
-
-class Config {
-    static readonly region = 'us-east-1';
-
-    public endpoint = "";
-    public certificate = "";
-    public private_key = "";
-
-    public access_key = "";
-    public secret_key = "";
-    public session_token = "";
-
-    configured() {
-        return this.certificate
-            && this.private_key
-            && this.endpoint
-            && this.access_key
-            && this.secret_key
-            && this.session_token;
-    }
-
-    static _cached: Config;
-};
-
-async function fetch_credentials(): Promise<Config> {
-    if (Config._cached) {
-        return Config._cached;
-    }
-
-    return new Promise((resolve, reject) => {
-        try {
-            const timeout = setTimeout(reject, 5000);
-            const client = new SecretsManager({
-                region: Config.region,
-                httpOptions: {
-                    connectTimeout: 3000,
-                    timeout: 5000
-                }
-            });
-
-            const config = new Config();
-            const resolve_if_done = () => {
-                if (config.configured()) {
-                    clearTimeout(timeout);
-                    Config._cached = config;
-                    resolve(config);
-                }
-            }
-
-            client.getSecretValue({ SecretId: 'unit-test/endpoint' }, (error, data) => {
-                if (error) {
-                    reject(error);
-                }
-
-                try {
-                    config.endpoint = data.SecretString as string;
-                } catch (err) {
-                    reject(err);
-                }
-
-                resolve_if_done();
-            });
-            client.getSecretValue({ SecretId: 'unit-test/certificate' }, (error, data) => {
-                if (error) {
-                    reject(error);
-                }
-
-                try {
-                    config.certificate = data.SecretString as string;
-                } catch (err) {
-                    reject(err);
-                }
-
-                resolve_if_done();
-            });
-            client.getSecretValue({ SecretId: 'unit-test/privatekey' }, (error, data) => {
-                if (error) {
-                    reject(error);
-                }
-
-                try {
-                    config.private_key = data.SecretString as string;
-                } catch (err) {
-                    reject(err);
-                }
-
-                resolve_if_done();
-            });
-
-            client.getSecretValue({ SecretId: 'unit-test/cognitopool' }, (error, data) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                const credentials = new CognitoIdentityCredentials({
-                    IdentityPoolId: data.SecretString as string,
-                }, {
-                    region: "us-east-1",
-                });
-                credentials.refresh((err) => {
-                    if (err) {
-                        return reject(`Error fetching cognito credentials: ${err.message}`);
-                    }
-                    config.access_key = credentials.accessKeyId;
-                    config.secret_key = credentials.secretAccessKey;
-                    config.session_token = credentials.sessionToken;
-
-                    resolve_if_done();
-                });
-            });
-        } catch (err) {
-            reject(err);
-        }
-    });
-}
 
 test('MQTT Connect/Disconnect', async () => {
     let aws_opts: Config;
@@ -142,6 +25,7 @@ test('MQTT Connect/Disconnect', async () => {
         .with_clean_session(true)
         .with_client_id(`node-mqtt-unit-test-${uuid()}`)
         .with_endpoint(aws_opts.endpoint)
+        .with_credentials(Config.region, aws_opts.access_key, aws_opts.secret_key, aws_opts.session_token)
         .build()
     const client = new MqttClient(new ClientBootstrap());
     const connection = client.new_connection(config);
@@ -166,48 +50,6 @@ test('MQTT Connect/Disconnect', async () => {
     await expect(promise).resolves.toBeTruthy();
 });
 
-test('MQTT Websocket', async () => {
-    let aws_opts: Config;
-    try {
-        aws_opts = await fetch_credentials();
-    } catch (err) {
-        return;
-    }
-
-    const bootstrap = new ClientBootstrap();
-    const config = AwsIotMqttConnectionConfigBuilder.new_with_websockets({
-        region: "us-east-1",
-        credentials_provider: AwsCredentialsProvider.newStatic(
-            aws_opts.access_key,
-            aws_opts.secret_key,
-            aws_opts.session_token
-        ),
-    })
-        .with_clean_session(true)
-        .with_client_id(`node-mqtt-unit-test-${new Date()}`)
-        .with_endpoint(aws_opts.endpoint)
-        .build()
-    const client = new MqttClient(bootstrap);
-    const connection = client.new_connection(config);
-    const promise = new Promise((resolve, reject) => {
-        connection.on('connect', (session_present) => {
-            connection.disconnect();
-
-            if (session_present) {
-                reject("Session present");
-            }
-        });
-        connection.on('error', (error) => {
-            reject(error);
-        })
-        connection.on('disconnect', () => {
-            resolve(true);
-        })
-        connection.connect();
-    });
-    await expect(promise).resolves.toBeTruthy();
-});
-
 test('MQTT Pub/Sub', async () => {
 
     let aws_opts: Config;
@@ -222,6 +64,7 @@ test('MQTT Pub/Sub', async () => {
         .with_clean_session(true)
         .with_client_id(`node-mqtt-unit-test-${uuid()}`)
         .with_endpoint(aws_opts.endpoint)
+        .with_credentials(Config.region, aws_opts.access_key, aws_opts.secret_key, aws_opts.session_token)
         .with_timeout_ms(5000)
         .build()
     const client = new MqttClient(new ClientBootstrap());
@@ -268,6 +111,7 @@ test('MQTT Will', async () => {
         .with_clean_session(true)
         .with_client_id(`node-mqtt-unit-test-${uuid()}`)
         .with_endpoint(aws_opts.endpoint)
+        .with_credentials(Config.region, aws_opts.access_key, aws_opts.secret_key, aws_opts.session_token)
         .with_will(new MqttWill(
             '/last/will/and/testament',
             QoS.AtLeastOnce,
@@ -308,6 +152,7 @@ test('MQTT On Any Publish', async () => {
         .with_clean_session(true)
         .with_client_id(`node-mqtt-unit-test-${uuid()}`)
         .with_endpoint(aws_opts.endpoint)
+        .with_credentials(Config.region, aws_opts.access_key, aws_opts.secret_key, aws_opts.session_token)
         .with_timeout_ms(5000)
         .build()
     const client = new MqttClient(new ClientBootstrap());

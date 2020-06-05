@@ -32,6 +32,14 @@ export class AwsIotMqttConnectionConfigBuilder {
         };
     }
 
+    static new_mtls_builder(...args: any[]) {
+        return AwsIotMqttConnectionConfigBuilder.new_builder_for_websocket();
+    }
+
+    static new_with_websockets(...args: any[]) {
+        return AwsIotMqttConnectionConfigBuilder.new_builder_for_websocket();
+    }
+
     /**
      * Creates a new builder using MQTT over websockets (the only option in browser)
      */

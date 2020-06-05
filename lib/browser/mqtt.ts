@@ -9,7 +9,7 @@ import { Trie, TrieOp, Node as TrieNode } from "./trie";
 
 import { BufferedEventEmitter } from "../common/event";
 import { CrtError } from "../browser";
-import { SocketOptions } from "./io";
+import { ClientBootstrap, SocketOptions } from "./io";
 import { QoS, Payload, MqttRequest, MqttSubscribeRequest, MqttWill } from "../common/mqtt";
 export { QoS, Payload, MqttRequest, MqttSubscribeRequest, MqttWill } from "../common/mqtt";
 
@@ -85,6 +85,9 @@ export interface MqttConnectionConfig {
  * @category MQTT
  */
 export class MqttClient {
+    constructor(bootstrap?: ClientBootstrap) {
+
+    }
     /**
      * Creates a new {@link MqttClientConnection}
      * @param config Configuration for the connection
