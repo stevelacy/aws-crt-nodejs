@@ -42,17 +42,13 @@ test('MQTT Connect/Disconnect', async (done) => {
     const connection = client.new_connection(config);
     const promise = new Promise(async (resolve, reject) => {
         connection.on('connect', async (session_present) => {
+            expect(session_present).toBeFalsy();
+
             const disconnected = connection.disconnect();
             await expect(disconnected).resolves.toBeUndefined();
-
-            if (session_present) {
-                reject("Session should not be present");
-            }
-
         });
         connection.on('error', (error) => {
             reject(error);
-
         })
         connection.on('disconnect', () => {
             resolve(true);
@@ -85,21 +81,13 @@ test('MQTT Pub/Sub', async (done) => {
     const connection = client.new_connection(config);
     const promise = new Promise(async (resolve, reject) => {
         connection.on('connect', async (session_present) => {
-            console.log('CONNECTED');
             expect(session_present).toBeFalsy();
             const test_topic = '/test/me/senpai';
             const test_payload = 'NOTICE ME';
             const sub = connection.subscribe(test_topic, QoS.AtLeastOnce, async (topic, payload) => {
-                if (topic != test_topic) {
-                    reject("Topic does not match");
-                }
-                if (payload === undefined) {
-                    reject("Undefined payload");
-                }
+                expect(topic).toEqual(test_topic);
                 const payload_str = decoder.decode(payload);
-                if (payload_str !== test_payload) {
-                    reject("Payloads do not match");
-                }
+                expect(payload_str).toEqual(test_payload);
                 resolve(true);
 
                 const disconnected = connection.disconnect();
@@ -144,12 +132,9 @@ test('MQTT Will', async (done) => {
     const connection = client.new_connection(config);
     const promise = new Promise(async (resolve, reject) => {
         connection.on('connect', async (session_present) => {
+            expect(session_present).toBeFalsy();
             const disconnected = connection.disconnect();
             await expect(disconnected).resolves.toBeUndefined();
-
-            if (session_present) {
-                reject("Session should not be present");
-            }
         });
         connection.on('error', (error) => {
             reject(error)
@@ -187,16 +172,10 @@ test('MQTT On Any Publish', async (done) => {
         const test_payload = 'NOTICE ME';
 
         connection.on('message', async (topic, payload) => {
-            if (topic != test_topic) {
-                reject("Topic does not match");
-            }
-            if (payload === undefined) {
-                reject("Undefined payload");
-            }
+            expect(topic).toEqual(test_topic);
+            expect(payload).toBeDefined();
             const payload_str = decoder.decode(payload);
-            if (payload_str !== test_payload) {
-                reject("Payloads do not match");
-            }
+            expect(payload_str).toEqual(test_payload);
 
             resolve(true);
 
