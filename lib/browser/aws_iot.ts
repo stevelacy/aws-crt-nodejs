@@ -42,10 +42,16 @@ export class AwsIotMqttConnectionConfigBuilder {
         };
     }
 
+    /**
+     * For API compatibility with the native version. Does not set up mTLS.
+     */
     static new_mtls_builder(...args: any[]) {
         return AwsIotMqttConnectionConfigBuilder.new_builder_for_websocket();
     }
 
+    /**
+     * For API compatibility with the native version. Alias for {@link new_builder_for_websocket}.
+     */
     static new_with_websockets(...args: any[]) {
         return AwsIotMqttConnectionConfigBuilder.new_builder_for_websocket();
     }
