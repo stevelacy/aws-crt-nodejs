@@ -14,9 +14,6 @@
 
 /** This file contains polyfills for possibly missing browser features */
 
-const { TextDecoder, TextEncoder } = require('fastestsmallesttextencoderdecoder');
-
-export {
-    TextEncoder,
-    TextDecoder,
-}
+var window: any = (typeof global == '' + void 0 ? typeof self == '' + void 0 ? this : self : global);
+export const TextEncoder = window['TextEncoder'] ?? require('fastestsmallesttextencoderdecoder').TextEncoder;
+export const TextDecoder = window['TextDecoder'] ?? require('fastestsmallesttextencoderdecoder').TextDecoder;

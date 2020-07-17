@@ -8,7 +8,6 @@ import { v4 as uuid } from 'uuid';
 import { ClientBootstrap } from '@awscrt/io';
 import { MqttClient, QoS, MqttWill } from '@awscrt/mqtt';
 import { AwsIotMqttConnectionConfigBuilder } from '@awscrt/aws_iot';
-import { TextDecoder } from '@awscrt/polyfills';
 import { Config, fetch_credentials } from '@test/credentials';
 
 jest.setTimeout(10000);
@@ -59,7 +58,6 @@ test('MQTT Pub/Sub', async (done) => {
         return;
     }
 
-    const decoder = new TextDecoder('utf8');
     const config = AwsIotMqttConnectionConfigBuilder.new_mtls_builder(aws_opts.certificate, aws_opts.private_key)
         .with_clean_session(true)
         .with_client_id(`node-mqtt-unit-test-${uuid()}`)
@@ -76,7 +74,7 @@ test('MQTT Pub/Sub', async (done) => {
             const test_payload = 'NOTICE ME';
             const sub = connection.subscribe(test_topic, QoS.AtLeastOnce, async (topic, payload) => {
                 expect(topic).toEqual(test_topic);
-                const payload_str = decoder.decode(payload);
+                const payload_str = payload.toString();
                 expect(payload_str).toEqual(test_payload);
                 resolve(true);
 
@@ -147,7 +145,6 @@ test('MQTT On Any Publish', async (done) => {
         return;
     }
 
-    const decoder = new TextDecoder('utf8');
     const config = AwsIotMqttConnectionConfigBuilder.new_mtls_builder(aws_opts.certificate, aws_opts.private_key)
         .with_clean_session(true)
         .with_client_id(`node-mqtt-unit-test-${uuid()}`)
@@ -164,7 +161,7 @@ test('MQTT On Any Publish', async (done) => {
         connection.on('message', async (topic, payload) => {
             expect(topic).toEqual(test_topic);
             expect(payload).toBeDefined();
-            const payload_str = decoder.decode(payload);
+            const payload_str = payload.toString();
             expect(payload_str).toEqual(test_payload);
 
             resolve(true);
