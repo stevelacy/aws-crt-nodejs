@@ -16,6 +16,6 @@
 import { TextEncoder, TextDecoder } from 'util';
 
 export {
-    TextDecoder,
     TextEncoder,
+    TextDecoder,
 }
