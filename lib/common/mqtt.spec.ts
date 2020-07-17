@@ -1,6 +1,16 @@
-/**
+/*
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
  */
 
 import { v4 as uuid } from 'uuid';
@@ -8,6 +18,7 @@ import { v4 as uuid } from 'uuid';
 import { ClientBootstrap } from '@awscrt/io';
 import { MqttClient, QoS, MqttWill } from '@awscrt/mqtt';
 import { AwsIotMqttConnectionConfigBuilder } from '@awscrt/aws_iot';
+import { TextDecoder } from '@awscrt/polyfills';
 import { Config, fetch_credentials } from '@test/credentials';
 
 jest.setTimeout(10000);
@@ -74,7 +85,7 @@ test('MQTT Pub/Sub', async (done) => {
             const test_payload = 'NOTICE ME';
             const sub = connection.subscribe(test_topic, QoS.AtLeastOnce, async (topic, payload) => {
                 expect(topic).toEqual(test_topic);
-                const payload_str = payload.toString();
+                const payload_str = (new TextDecoder()).decode(new Uint8Array(payload));
                 expect(payload_str).toEqual(test_payload);
                 resolve(true);
 
@@ -161,7 +172,7 @@ test('MQTT On Any Publish', async (done) => {
         connection.on('message', async (topic, payload) => {
             expect(topic).toEqual(test_topic);
             expect(payload).toBeDefined();
-            const payload_str = payload.toString();
+            const payload_str = (new TextDecoder()).decode(new Uint8Array(payload));
             expect(payload_str).toEqual(test_payload);
 
             resolve(true);
