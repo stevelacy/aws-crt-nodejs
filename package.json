@@ -12,7 +12,7 @@
   "browser": "./dist.browser/browser.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "tsc": "node ./scripts/tsc.js",
+    "tsc": "node ./scripts/tsc.js && cp ./lib/browser/polyfills.js ./dist.browser/browser/",
     "test": "npm run test:native",
     "test:node": "npm run test:native",
     "test:native": "npx jest -i --verbose --config test/native/jest.config.js --forceExit",

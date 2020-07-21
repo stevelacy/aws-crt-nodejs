@@ -3,7 +3,7 @@
     "include": [
         "lib/browser.ts",
         "lib/common/*.ts",
-        "lib/browser/*.ts"
+        "lib/browser/{*.ts,*.js}"
     ],
     "compilerOptions": {
         "target": "es5",
